@@ -4,7 +4,7 @@ import torch.optim as optim
 import torchvision
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
-from models.conv import ConvNet
+from models.conv import Net
 from models.rnn_conv import ImageRNN
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
@@ -36,8 +36,6 @@ def train_cnn(log_interval, model, device, train_loader, optimizer, epoch):
 
 def train_rnn(log_interval, model, device, train_loader, optimizer, epoch):
     model.train()
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -45,6 +43,7 @@ def train_rnn(log_interval, model, device, train_loader, optimizer, epoch):
         model.hidden = model.init_hidden()
         data = data.view(-1, 28, 28)
         outputs = model(data)
+        criterion = torch.nn.CrossEntropyLoss()
         loss = criterion(outputs, target)
         loss.backward(); optimizer.step()
         if batch_idx % log_interval == 0:
@@ -58,8 +57,8 @@ def test(model, device, test_loader):
     correct = 0
     with torch.no_grad():
         for data, target in test_loader:
-            data = torch.squeeze(data)
             data, target = data.to(device), target.to(device)
+            # data = torch.squeeze(data)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
@@ -95,34 +94,35 @@ def main():
     # Use data predefined loader
     # Pre-processing by using the transform.Compose
     # divide into batches
-    #num_workers uses subprocesses to asynchronously load data, and use pinned RAM (pin_memory) to speed up ram and
-    # gpu transfers (change 4 change number of num_workers)
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-    #change 1 normalise the input images
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-    train_dataset = datasets.MNIST('PATH_TO_STORE_TRAINSET', download=True, train=True, transform=transform)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True, **kwargs)
-
-    # change 2 normalise test images
-    test_dataset = datasets.MNIST('PATH_TO_STORE_TRAINSET', download=True, train=True, transform=transform)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1000, shuffle=True, **kwargs)
+    train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('../data', train=True, download=True,
+                       transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ])),
+        batch_size=64, shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('../data', train=False, transform=transforms.Compose([
+                           transforms.ToTensor()
+                       ])),
+        batch_size=1000, shuffle=True, **kwargs)
 
     # get some random training images
     dataiter = iter(train_loader)
     images, labels = dataiter.next()
-    #img = torchvision.utils.make_grid(images)
-    #imsave(img)
+    # img = torchvision.utils.make_grid(images)
+    # imsave(img)
 
     # #####################    Build your network and run   ############################
     if RNN:
         model = ImageRNN(64, N_STEPS, N_INPUTS, N_NEURONS, N_OUTPUTS, device).to(device)
     else:
-        model = ConvNet()
+        model = Net().to(device)
 
     if RNN:
         optimizer = optim.Adadelta(model.parameters(), lr=0.01)
-    # else:
-    #     optimizer = optim.Adam(model.parameters(), lr=learnRate)
+    else:
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=gamma)
 

@@ -2,17 +2,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 # The network should inherit from the nn.Module
-class ConvNet(nn.Module):
+class Net(nn.Module):
     def __init__(self):
-        super(ConvNet, self).__init__()
+        super(Net, self).__init__()
         # 1: input channals 32: output channels, 3: kernel size, 1: stride
-        self.conv1 = nn.Conv2d(1, 32, 5, 1, 2)
-        self.conv2 = nn.Conv2d(32, 64, 5, 1)
+        self.conv1 = nn.Conv2d(1, 32, 3, 1)
+        self.conv2 = nn.Conv2d(32, 64, 3, 1)
         # It will 'filter' out some of the input by the probability(assign zero)
         self.dropout1 = nn.Dropout2d(0.25)
         self.dropout2 = nn.Dropout2d(0.5)
         # Fully connected layer: input size, output size
-        self.fc1 = nn.Linear(3136, 128)
+        self.fc1 = nn.Linear(9216, 128)
         self.fc2 = nn.Linear(128, 10)
     # it is inherit from nn.Module, nn.Module have both forward() and backward()
     # In this case, forward() link all layers together,
