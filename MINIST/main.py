@@ -95,17 +95,14 @@ def main():
     # Pre-processing by using the transform.Compose
     # divide into batches
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor()
-                       ])),
-        batch_size=64, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=False, transform=transforms.Compose([
-                           transforms.ToTensor()
-                       ])),
-        batch_size=1000, shuffle=True, **kwargs)
+    #change 1 normalised the input images
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+    train_dataset = datasets.MNIST('PATH_TO_STORE_TRAINSET', download=True, train=True, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True, **kwargs)
+
+    # change 2 normalised test images
+    test_dataset = datasets.MNIST('PATH_TO_STORE_TRAINSET', download=True, train=True, transform=transform)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1000, shuffle=True, **kwargs)
 
     # get some random training images
     dataiter = iter(train_loader)
