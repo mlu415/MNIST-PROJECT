@@ -58,7 +58,7 @@ def test(model, device, test_loader):
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
-            # data = torch.squeeze(data)
+            data = torch.squeeze(data)
             output = model(data)
             test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
@@ -78,11 +78,11 @@ def main():
     save_model = True
 
     #RNN
-    RNN = False
-    N_STEPS = 28
-    N_INPUTS = 28
+    RNN = True
     N_NEURONS = 150
-    N_OUTPUTS = 10
+    N_STEPS = 28 # 28 rows
+    N_INPUTS = 28 # 28 columns
+    N_OUTPUTS = 10 # number of classes  (digits)
 
     # Check whether you can use Cuda
     use_cuda = torch.cuda.is_available()
